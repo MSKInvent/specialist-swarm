@@ -57,6 +57,14 @@ def main() -> None:
         default_headers={"anthropic-beta": "managed-agents-2026-04-01"},
     )
 
+    # Idempotency: don't create a second critic if one already exists
+    if "critic" in specialist_ids:
+        raise SystemExit(
+            f"Critic already exists ({specialist_ids['critic']}). "
+            "Nothing to do. Remove the 'critic' entry from .specialist_ids.json "
+            "only if you really want a new one."
+        )
+
     # Create the critic
     critic = client.beta.agents.create(
         name="Deal Desk Critic",
@@ -77,9 +85,10 @@ def main() -> None:
 
     # Update coordinator's roster to include the critic
     coordinator = client.beta.agents.retrieve(coordinator_id)
-    new_roster = list(coordinator.multiagent.agents) + [
-        {"type": "agent", "id": critic.id}
-    ]
+    # Roster entries come back as SDK objects; rebuild them as plain dicts
+    new_roster = [
+        {"type": "agent", "id": a.id} for a in coordinator.multiagent.agents
+    ] + [{"type": "agent", "id": critic.id}]
 
     # Append critic guidance to the coordinator's system prompt
     new_system = coordinator.system + (

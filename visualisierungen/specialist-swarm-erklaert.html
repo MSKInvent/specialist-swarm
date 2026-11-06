@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Specialist Swarm erklärt</title>
+<style>
+:root{
+  --bg:#f7f8fa; --surface:#ffffff; --ink:#1b2430; --muted:#5b6675; --line:#d9dee6;
+  --coord:#1f4fd8; --coord-bg:#e6edff;
+  --spec:#0f8a6a; --spec-bg:#e1f5ee;
+  --skill:#b7791f; --skill-bg:#fdf0d5;
+  --cloud:#6b4fd8; --cloud-bg:#ece8fb;
+  --local:#c2410c; --local-bg:#fde8dc;
+  --out:#374151; --out-bg:#eceff3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10151c; --surface:#171e28; --ink:#e7ecf3; --muted:#9aa6b6; --line:#2b3544;
+    --coord:#7ea2ff; --coord-bg:#1a2744;
+    --spec:#4fd1a8; --spec-bg:#12342b;
+    --skill:#f0b955; --skill-bg:#3a2d12;
+    --cloud:#a995ff; --cloud-bg:#251f45;
+    --local:#ff9a6b; --local-bg:#3b2013;
+    --out:#cbd5e1; --out-bg:#222b38;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10151c; --surface:#171e28; --ink:#e7ecf3; --muted:#9aa6b6; --line:#2b3544;
+  --coord:#7ea2ff; --coord-bg:#1a2744;
+  --spec:#4fd1a8; --spec-bg:#12342b;
+  --skill:#f0b955; --skill-bg:#3a2d12;
+  --cloud:#a995ff; --cloud-bg:#251f45;
+  --local:#ff9a6b; --local-bg:#3b2013;
+  --out:#cbd5e1; --out-bg:#222b38;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.9rem;margin:8px 0 6px}
+h2{font-size:1.3rem;margin:44px 0 6px}
+.lead{color:var(--muted);margin:0 0 8px;max-width:70ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:760px){.g2,.g4{grid-template-columns:1fr}}
+@media(min-width:761px) and (max-width:900px){.g4{grid-template-columns:repeat(2,1fr)}}
+.tag{display:inline-block;font-size:.75rem;font-weight:600;border-radius:999px;padding:2px 10px;margin:0 6px 4px 0}
+.t-coord{background:var(--coord-bg);color:var(--coord)}
+.t-spec{background:var(--spec-bg);color:var(--spec)}
+.t-skill{background:var(--skill-bg);color:var(--skill)}
+.t-cloud{background:var(--cloud-bg);color:var(--cloud)}
+.t-local{background:var(--local-bg);color:var(--local)}
+.t-out{background:var(--out-bg);color:var(--out)}
+code{font:.85em ui-monospace,Consolas,monospace;background:var(--out-bg);padding:1px 6px;border-radius:5px}
+svg{width:100%;height:auto;display:block}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--ink)}
+.s-title{font-size:15px;font-weight:700}
+.s-sub{font-size:12px;fill:var(--muted)!important}
+.s-small{font-size:11px}
+.box-coord{fill:var(--coord-bg);stroke:var(--coord);stroke-width:2}
+.box-spec{fill:var(--spec-bg);stroke:var(--spec);stroke-width:2}
+.box-skill{fill:var(--skill-bg);stroke:var(--skill);stroke-width:1.5}
+.box-cloud{fill:none;stroke:var(--cloud);stroke-width:2;stroke-dasharray:6 5}
+.box-local{fill:var(--local-bg);stroke:var(--local);stroke-width:2}
+.box-out{fill:var(--out-bg);stroke:var(--out);stroke-width:2}
+.arrow{stroke:var(--muted);stroke-width:2;fill:none}
+.arrow-go{stroke:var(--coord);stroke-width:2.2;fill:none}
+.arrow-back{stroke:var(--spec);stroke-width:2.2;fill:none;stroke-dasharray:5 4}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:10px 0 0;font-size:.85rem;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:22px;height:0;border-top:3px solid;margin-right:6px;vertical-align:middle}
+.l-go::before{border-color:var(--coord)}
+.l-back::before{border-top-style:dashed!important;border-color:var(--spec)}
+.l-seq::before{border-color:var(--muted)}
+/* steps */
+ol.steps{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+ol.steps li{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.num{width:32px;height:32px;border-radius:50%;background:var(--coord-bg);color:var(--coord);font-weight:700;display:grid;place-items:center}
+.steps b{display:block}
+.steps small{color:var(--muted)}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:.92rem;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--out-bg);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+.tablewrap{overflow-x:auto}
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0}
+.chain .node{padding:6px 12px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);font-size:.85rem}
+.chain .arr{color:var(--muted)}
+.note{border-left:4px solid var(--skill);background:var(--skill-bg);padding:12px 14px;border-radius:0 10px 10px 0;margin-top:14px}
+.note b{color:var(--skill)}
+h3{margin:0 0 4px;font-size:1.05rem}
+.meta{font-size:.85rem;color:var(--muted);margin:2px 0 8px}
+ul.tight{margin:6px 0 0;padding-left:18px}
+footer{margin-top:48px;color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Specialist Swarm — so funktioniert es</h1>
+<p class="lead">Ein <b>Coordinator</b> (Senior Partner) bekommt eine Kundenanfrage (RFP), verteilt sie parallel an vier <b>Spezialisten</b> und baut aus deren Antworten ein Word-Dokument. Diese Seite zeigt, wo welche Information liegt und wer wen aufruft.</p>
+<p class="lead">Grundlage: die Skripte im Ordner <code>specialist-swarm</code> (Claude Managed Agents, Multi-Agent, Research Preview). Alle Daten sind synthetisch.</p>
+
+<!-- ============ 1. Gesamtbild ============ -->
+<h2>1 · Das Gesamtbild</h2>
+<p class="lead">Von links nach rechts: Du startest ein Skript, das eine <b>Session</b> in der Cloud eröffnet. Darin arbeitet der Coordinator mit seinem Team und liefert am Ende ein Dokument.</p>
+
+<div class="card">
+<svg viewBox="0 0 920 540" role="img" aria-label="Gesamtarchitektur des Specialist Swarm">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+    <marker id="ahc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--coord)"/></marker>
+    <marker id="ahs" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--spec)"/></marker>
+  </defs>
+
+  <!-- lokal -->
+  <rect class="box-local" x="14" y="170" width="150" height="190" rx="12"/>
+  <text class="s-title" x="89" y="196" text-anchor="middle">Dein Rechner</text>
+  <text class="s-small" x="89" y="220" text-anchor="middle">run_deal_desk.py</text>
+  <text class="s-sub" x="89" y="244" text-anchor="middle">liest &amp; schickt:</text>
+  <text class="s-small" x="89" y="264" text-anchor="middle">• RFP Acme Corp</text>
+  <text class="s-small" x="89" y="282" text-anchor="middle">• past-wins.json</text>
+  <text class="s-small" x="89" y="300" text-anchor="middle">• product-overview.md</text>
+  <text class="s-sub" x="89" y="330" text-anchor="middle">+ Anweisung als</text>
+  <text class="s-sub" x="89" y="346" text-anchor="middle">„user.message“</text>
+
+  <path class="arrow" d="M164 265 H214" marker-end="url(#ah)"/>
+  <text class="s-small" x="189" y="255" text-anchor="middle">①</text>
+
+  <!-- Cloud / Session -->
+  <rect class="box-cloud" x="214" y="12" width="500" height="516" rx="16"/>
+  <text class="s-title" x="232" y="36" style="fill:var(--cloud)">Anthropic-Cloud · eine Session</text>
+  <text class="s-sub" x="232" y="54">enthält Gesprächsverlauf + alle Sub-Threads</text>
+
+  <!-- Coordinator -->
+  <rect class="box-coord" x="324" y="72" width="280" height="96" rx="12"/>
+  <text class="s-title" x="464" y="98" text-anchor="middle">Coordinator „Senior Partner“</text>
+  <text class="s-small" x="464" y="118" text-anchor="middle">Modell: Opus · liest RFP · plant</text>
+  <text class="s-small" x="464" y="136" text-anchor="middle">delegiert parallel · fasst zusammen</text>
+  <text class="s-small" x="464" y="154" text-anchor="middle">erzeugt das Word-Dokument</text>
+
+  <!-- Critic (optional) -->
+  <rect class="box-spec" x="224" y="78" width="78" height="84" rx="10" style="stroke-dasharray:5 4"/>
+  <text class="s-title" x="263" y="104" text-anchor="middle" style="font-size:13px">Critic</text>
+  <text class="s-small" x="263" y="122" text-anchor="middle">optional</text>
+  <text class="s-small" x="263" y="138" text-anchor="middle">Gegenleser</text>
+  <text class="s-sub" x="263" y="154" text-anchor="middle">Opus</text>
+  <path class="arrow-go" d="M324 108 H304" marker-end="url(#ahc)"/>
+  <path class="arrow-back" d="M304 134 H324" marker-end="url(#ahs)"/>
+
+  <!-- Pfeile Coordinator -> Spezialisten -->
+  <path class="arrow-go" d="M380 168 L284 262" marker-end="url(#ahc)"/>
+  <path class="arrow-go" d="M432 168 L408 262" marker-end="url(#ahc)"/>
+  <path class="arrow-go" d="M496 168 L520 262" marker-end="url(#ahc)"/>
+  <path class="arrow-go" d="M548 168 L644 262" marker-end="url(#ahc)"/>
+  <text class="s-small" x="300" y="206" style="fill:var(--coord)">② delegiert</text>
+  <text class="s-small" x="560" y="206" style="fill:var(--coord)">alle vier gleichzeitig</text>
+
+  <!-- Spezialisten -->
+  <g>
+    <rect class="box-spec" x="228" y="264" width="112" height="86" rx="10"/>
+    <text class="s-title" x="284" y="288" text-anchor="middle" style="font-size:13px">Pricing</text>
+    <text class="s-small" x="284" y="306" text-anchor="middle">Preis &amp; Rabatt</text>
+    <text class="s-sub" x="284" y="324" text-anchor="middle">Sonnet</text>
+
+    <rect class="box-spec" x="352" y="264" width="112" height="86" rx="10"/>
+    <text class="s-title" x="408" y="288" text-anchor="middle" style="font-size:13px">Legal</text>
+    <text class="s-small" x="408" y="306" text-anchor="middle">Vertragsrisiken</text>
+    <text class="s-sub" x="408" y="324" text-anchor="middle">Sonnet</text>
+
+    <rect class="box-spec" x="476" y="264" width="112" height="86" rx="10"/>
+    <text class="s-title" x="532" y="288" text-anchor="middle" style="font-size:13px">Technical Fit</text>
+    <text class="s-small" x="532" y="306" text-anchor="middle">Produkt-Abgleich</text>
+    <text class="s-sub" x="532" y="324" text-anchor="middle">Sonnet</text>
+
+    <rect class="box-spec" x="600" y="264" width="112" height="86" rx="10"/>
+    <text class="s-title" x="656" y="288" text-anchor="middle" style="font-size:13px">Competitive</text>
+    <text class="s-small" x="656" y="306" text-anchor="middle">Wettbewerber</text>
+    <text class="s-sub" x="656" y="324" text-anchor="middle">Haiku</text>
+  </g>
+
+  <!-- Skills -->
+  <rect class="box-skill" x="228" y="370" width="112" height="38" rx="8"/>
+  <text class="s-small" x="284" y="387" text-anchor="middle">Skill:</text>
+  <text class="s-small" x="284" y="401" text-anchor="middle">pricing-playbook</text>
+  <rect class="box-skill" x="352" y="370" width="112" height="38" rx="8"/>
+  <text class="s-small" x="408" y="387" text-anchor="middle">Skill:</text>
+  <text class="s-small" x="408" y="401" text-anchor="middle">legal-checklist</text>
+  <rect class="box-skill" x="476" y="370" width="112" height="38" rx="8" style="stroke-dasharray:4 3"/>
+  <text class="s-small" x="532" y="387" text-anchor="middle">kein Skill</text>
+  <text class="s-small" x="532" y="401" text-anchor="middle">(Infos im Prompt)</text>
+  <rect class="box-skill" x="600" y="370" width="112" height="38" rx="8"/>
+  <text class="s-small" x="656" y="387" text-anchor="middle">Skill:</text>
+  <text class="s-small" x="656" y="401" text-anchor="middle">competitive-intel</text>
+  <path class="arrow" d="M284 350 V370 M408 350 V370 M532 350 V370 M656 350 V370"/>
+
+  <!-- Rückwege -->
+  <path class="arrow-back" d="M240 350 C 200 420 200 440 330 458" marker-end="url(#ahs)"/>
+  <text class="s-small" x="236" y="436" style="fill:var(--spec)">③ Antworten</text>
+  <text class="s-small" x="236" y="450" style="fill:var(--spec)">kommen zurück</text>
+
+  <!-- Container -->
+  <rect class="box-out" x="324" y="440" width="280" height="72" rx="10"/>
+  <text class="s-title" x="464" y="466" text-anchor="middle">Container (Environment)</text>
+  <text class="s-small" x="464" y="486" text-anchor="middle">④ Coordinator schreibt hier</text>
+  <text class="s-small" x="464" y="502" text-anchor="middle">das .docx (Code-Tools)</text>
+
+  <!-- Ausgabe -->
+  <path class="arrow" d="M714 476 H756" marker-end="url(#ah)"/>
+  <rect class="box-out" x="758" y="420" width="148" height="112" rx="12"/>
+  <text class="s-title" x="832" y="448" text-anchor="middle">⑤ Ergebnis</text>
+  <text class="s-small" x="832" y="470" text-anchor="middle">Proposal Response</text>
+  <text class="s-small" x="832" y="486" text-anchor="middle">als .docx</text>
+  <text class="s-sub" x="832" y="508" text-anchor="middle">→ Ordner outputs/</text>
+
+  <!-- Event stream -->
+  <path class="arrow" d="M714 150 H760 V250 H714" stroke-dasharray="3 4" marker-end="url(#ah)"/>
+  <rect class="box-out" x="768" y="130" width="138" height="140" rx="10" style="fill:var(--surface)"/>
+  <text class="s-title" x="837" y="156" text-anchor="middle" style="font-size:13px">Event-Stream</text>
+  <text class="s-small" x="837" y="178" text-anchor="middle">live in deinem Terminal:</text>
+  <text class="s-small" x="837" y="200" text-anchor="middle">[delegate →]</text>
+  <text class="s-small" x="837" y="216" text-anchor="middle">[thread running]</text>
+  <text class="s-small" x="837" y="232" text-anchor="middle">[reply ←]</text>
+  <text class="s-small" x="837" y="254" text-anchor="middle">[swarm finished]</text>
+</svg>
+<div class="legend">
+  <span class="l-go">Auftrag (Coordinator → Spezialist)</span>
+  <span class="l-back">Antwort (Spezialist → Coordinator)</span>
+  <span class="l-seq">Datenfluss / Zuordnung</span>
+</div>
+</div>
+
+<!-- ============ 2. Ablauf ============ -->
+<h2>2 · Der Ablauf Schritt für Schritt</h2>
+<p class="lead">Was passiert, wenn du <code>python run_deal_desk.py</code> startest.</p>
+<ol class="steps">
+  <li><span class="num">1</span><div><b>Skript lädt die Eingaben und öffnet eine Session</b>
+    RFP, Past Wins und Produktübersicht werden zu <i>einem</i> Text zusammengesetzt und in die Nachricht eingebettet. Es wird keine Datei hochgeladen.
+    <br><small>Quelle: <code>run_deal_desk.py</code> (Funktion <code>load_inputs_as_context</code>)</small></div></li>
+  <li><span class="num">2</span><div><b>Coordinator liest die RFP selbst</b>
+    Er notiert Kunde, Umfang und Auffälligkeiten, bevor er jemanden fragt.</div></li>
+  <li><span class="num">3</span><div><b>Er delegiert an alle vier Spezialisten gleichzeitig</b>
+    Jeder bekommt den RFP-Text und eine enge Aufgabe samt Längenvorgabe (ca. 300 Wörter). Für jeden Spezialisten entsteht ein eigener <b>Thread</b> in der Session.
+    <br><small>Im Terminal: <code>[delegate →]</code>, <code>[thread spawned]</code>, <code>[thread running]</code></small></div></li>
+  <li><span class="num">4</span><div><b>Spezialisten arbeiten parallel in ihrer Spur</b>
+    Jeder nutzt seinen eigenen Prompt, sein Modell und – falls vorhanden – seinen Skill. Sie sprechen <b>nicht</b> miteinander, nur mit dem Coordinator.</div></li>
+  <li><span class="num">5</span><div><b>Antworten fließen zurück</b>
+    Der Coordinator übernimmt sie ohne Misstrauen und fragt nur bei echten Widersprüchen nach.
+    <br><small>Im Terminal: <code>[reply ←]</code></small></div></li>
+  <li><span class="num">6</span><div><b>Optional: Critic prüft den Entwurf</b>
+    Nur wenn <code>stretch_critic_subagent.py</code> ausgeführt wurde. Der Coordinator legt dem Critic den Entwurf vor. Antwort: <b>SHIP IT</b> (freigeben), <b>REVISE</b> (überarbeiten, höchstens zweimal erneut vorlegen) oder <b>STOP</b> (Deal nicht verfolgen, <i>kein</i> Dokument).
+    <br><small>Im Terminal: <code>[delegate →] Deal Desk Critic</code> nach den vier Spezialisten</small></div></li>
+  <li><span class="num">7</span><div><b>Synthese und Dokument</b>
+    Gliederung: Executive Summary, Kundenbedarf, Passung, Angebot (Pricing), Vertragsansatz (Legal), Risiken. Das Word-Dokument entsteht im Container.</div></li>
+  <li><span class="num">8</span><div><b>Download</b>
+    Das Skript lädt alle in der Session erzeugten Dateien nach <code>outputs/</code> und speichert das Transkript. Danach meldet es <code>[swarm finished]</code>.</div></li>
+</ol>
+
+<!-- ============ 3. Wo liegt was ============ -->
+<h2>3 · Wo liegen welche Informationen?</h2>
+<p class="lead">Zwei Orte: auf <b>deinem Rechner</b> (Skripte, Daten, Merkzettel) und in der <b>Anthropic-Cloud</b> (die eigentlichen Agenten).</p>
+
+<div class="grid g2" style="margin-top:12px">
+  <div class="card">
+    <span class="tag t-local">Dein Rechner</span>
+    <h3>Ordner <code>specialist-swarm</code></h3>
+    <ul class="tight">
+      <li><b>Skripte</b>: definieren Agenten, Prompts, Modelle (<code>create_*.py</code>)</li>
+      <li><b>skills/</b>: die Wissens-Bausteine als <code>SKILL.md</code></li>
+      <li><b>synthetic-data/</b>: RFP, Past Wins, Produktübersicht</li>
+      <li><b>Merkzettel mit IDs</b>: <code>.environment_id</code>, <code>.specialist_ids.json</code>, <code>.coordinator_id</code>, <code>.skill_ids.json</code>, <code>.last_session_id</code></li>
+      <li><b>outputs/</b>: heruntergeladenes Ergebnis</li>
+      <li><b>API-Key</b>: nur als Umgebungsvariable der Terminal-Session</li>
+    </ul>
+  </div>
+  <div class="card">
+    <span class="tag t-cloud">Anthropic-Cloud</span>
+    <h3>Managed Agents im Workspace</h3>
+    <ul class="tight">
+      <li><b>Environment</b>: die Laufumgebung (Container) der Session</li>
+      <li><b>4 Spezialisten-Agenten</b>: Name, Modell, System-Prompt, Tools, angehängte Skills</li>
+      <li><b>Coordinator-Agent</b>: System-Prompt und <i>Roster</i> (Liste der Spezialisten-IDs)</li>
+      <li><b>Skills</b>: hochgeladene Kopien der <code>SKILL.md</code></li>
+      <li><b>Session</b>: Gesprächsverlauf mit allen Sub-Threads</li>
+      <li><b>Dateien</b>: das erzeugte .docx</li>
+    </ul>
+  </div>
+</div>
+
+<h3 style="margin-top:22px">Die Verweiskette: wie die Teile zusammenhängen</h3>
+<div class="chain">
+  <span class="node">create_specialists.py</span><span class="arr">→ legt an →</span>
+  <span class="node">4 Agenten in der Cloud</span><span class="arr">→ IDs in →</span>
+  <span class="node"><code>.specialist_ids.json</code></span>
+</div>
+<div class="chain">
+  <span class="node"><code>.specialist_ids.json</code></span><span class="arr">→ gelesen von →</span>
+  <span class="node">create_coordinator.py</span><span class="arr">→ Roster im →</span>
+  <span class="node">Coordinator-Agent</span>
+</div>
+<div class="chain">
+  <span class="node">skills/*/SKILL.md</span><span class="arr">→ upload_skills.py →</span>
+  <span class="node">Skill in der Cloud</span><span class="arr">→ angehängt an →</span>
+  <span class="node">passenden Spezialisten</span>
+</div>
+<div class="chain">
+  <span class="node"><code>.coordinator_id</code> + <code>.environment_id</code></span><span class="arr">→ run_deal_desk.py →</span>
+  <span class="node">Session</span>
+</div>
+
+<h3 style="margin-top:22px">Wer weiß was?</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Information</th><th>Definiert in</th><th>Liegt zur Laufzeit</th></tr></thead>
+  <tbody>
+    <tr><td>Rolle und Auftrag eines Spezialisten (System-Prompt)</td><td><code>create_specialists.py</code></td><td>Agent in der Cloud</td></tr>
+    <tr><td>Welches Modell wer nutzt</td><td><code>create_specialists.py</code>, <code>create_coordinator.py</code></td><td>Agent in der Cloud</td></tr>
+    <tr><td>Wer zum Team gehört (Roster)</td><td><code>create_coordinator.py</code> (Feld <code>multiagent</code>)</td><td>Coordinator-Agent</td></tr>
+    <tr><td>Arbeitsweise des Coordinators (Schritte, Gliederung, Ton)</td><td><code>create_coordinator.py</code> (<code>COORDINATOR_SYSTEM</code>)</td><td>Coordinator-Agent</td></tr>
+    <tr><td>Fachregeln (Preise, Rechts-Positionen, Battlecards)</td><td><code>skills/*/SKILL.md</code></td><td>Skill, am Spezialisten angehängt</td></tr>
+    <tr><td>RFP, Past Wins, Produktübersicht</td><td><code>synthetic-data/</code></td><td>In der Nachricht an den Coordinator eingebettet</td></tr>
+    <tr><td>Welche Agenten es gibt (IDs)</td><td>Ausgabe der Skripte</td><td>Merkzettel-Dateien (<code>.*_id*</code>)</td></tr>
+    <tr><td>Verlauf der Zusammenarbeit</td><td>–</td><td>Session (einsehbar in der Console)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============ 4. Coordinator ============ -->
+<h2>4 · Wie der Coordinator funktioniert</h2>
+<div class="card" style="margin-top:12px">
+  <span class="tag t-coord">Coordinator</span><span class="tag t-cloud">Modell: Opus</span>
+  <h3>„Deal Desk Senior Partner“</h3>
+  <div class="grid g2" style="margin-top:10px">
+    <div>
+      <b>Was ihn zum Coordinator macht</b>
+      <p class="meta">Eine Konfigurationszeile beim Anlegen:</p>
+      <p style="margin:0"><code>multiagent = { type: "coordinator", agents: [ …4 IDs… ] }</code></p>
+      <p class="meta" style="margin-top:8px">Nur Agenten in dieser Liste kann er aufrufen. Ohne diesen Eintrag wäre er ein normaler Einzel-Agent.</p>
+    </div>
+    <div>
+      <b>Was sein System-Prompt vorgibt</b>
+      <ul class="tight">
+        <li>Zuerst die RFP selbst lesen</li>
+        <li><b>Alle vier</b> Spezialisten parallel beauftragen</li>
+        <li>Klare, kurze Aufträge mit Längenvorgabe</li>
+        <li>Antworten akzeptieren, nur bei Bedarf nachhaken</li>
+        <li>Ergebnis als Word-Dokument liefern, nicht als Chat</li>
+        <li>Ton: knapp, entschlossen</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 5. Spezialisten ============ -->
+<h2>5 · Die vier Spezialisten</h2>
+<p class="lead">Jeder hat eine enge Rolle, ein festes Ausgabeformat und – bis auf einen – einen eigenen Skill als Fachwissen.</p>
+<div class="grid g4" style="margin-top:12px">
+  <div class="card">
+    <span class="tag t-spec">Spezialist</span><span class="tag t-cloud">Sonnet</span>
+    <h3>Pricing</h3>
+    <p class="meta">Skill: <span class="tag t-skill">pricing-playbook</span></p>
+    <b>Liefert:</b>
+    <ul class="tight"><li>Listenpreis und Rabattband</li><li>Laufzeit, Zahlungsmodell</li><li>Zugeständnisse: ja / nein</li><li>Margenrisiken</li></ul>
+    <p class="meta" style="margin-top:8px">Zusätzlich genutzt: Past Wins (Vergleichsdeals)</p>
+  </div>
+  <div class="card">
+    <span class="tag t-spec">Spezialist</span><span class="tag t-cloud">Sonnet</span>
+    <h3>Legal Reviewer</h3>
+    <p class="meta">Skill: <span class="tag t-skill">legal-checklist</span></p>
+    <b>Liefert:</b>
+    <ul class="tight"><li>Auffällige RFP-Klauseln</li><li>Warum sie abweichen</li><li>Gegenposition</li><li>Schwere: Blocker / verhandelbar / ok</li></ul>
+  </div>
+  <div class="card">
+    <span class="tag t-spec">Spezialist</span><span class="tag t-cloud">Sonnet</span>
+    <h3>Technical Fit</h3>
+    <p class="meta">Skill: <span class="tag t-out">keiner</span></p>
+    <b>Liefert:</b>
+    <ul class="tight"><li>Voll / teilweise / nicht erfüllt</li><li>Gesamtbewertung hoch / mittel / niedrig</li><li>Wichtigstes Risiko</li></ul>
+    <p class="meta" style="margin-top:8px">Wissen kommt aus der Produktübersicht, die in der Nachricht steckt.</p>
+  </div>
+  <div class="card">
+    <span class="tag t-spec">Spezialist</span><span class="tag t-cloud">Haiku</span>
+    <h3>Competitive Intel</h3>
+    <p class="meta">Skill: <span class="tag t-skill">competitive-intel</span></p>
+    <b>Liefert:</b>
+    <ul class="tight"><li>2–3 wahrscheinliche Wettbewerber</li><li>Stärken und Schwächen im Deal</li><li>Zwei Positionierungswinkel</li><li>Eine Falle, die man meiden sollte</li></ul>
+    <p class="meta" style="margin-top:8px">Günstigeres Modell: schnelle Recherche.</p>
+  </div>
+</div>
+
+<h3 style="margin-top:26px">Optional: der Critic</h3>
+<div class="card">
+  <span class="tag t-spec">Fünfter Agent</span><span class="tag t-cloud">Opus</span><span class="tag t-out">Stretch Goal S2</span>
+  <p style="margin:6px 0 8px">Er schreibt nichts, er <b>prüft</b>. Der Coordinator muss ihm den Entwurf vorlegen, bevor das Dokument entsteht. Seine Antwort beginnt immer mit <code>VERDICT:</code> und einem von drei Urteilen.</p>
+  <div class="grid g2">
+    <div>
+      <b>Was <code>stretch_critic_subagent.py</code> tut</b>
+      <ul class="tight"><li>Legt den Agenten „Deal Desk Critic“ an</li><li>Speichert seine ID in <code>.specialist_ids.json</code></li><li>Nimmt ihn ins Roster des Coordinators auf</li><li>Ergänzt den Coordinator-Prompt um die Critic-Regeln</li></ul>
+    </div>
+    <div>
+      <b>Die drei Urteile</b>
+      <ul class="tight"><li><b>SHIP IT</b>: Dokument erzeugen</li><li><b>REVISE</b>: höchstens fünf Punkte, bis zu zwei Überarbeitungsrunden</li><li><b>STOP</b>: Bericht an den Nutzer, kein Dokument</li></ul>
+    </div>
+  </div>
+  <p class="meta" style="margin:10px 0 0">Das Skript lässt sich nur einmal ausführen, ein zweiter Lauf bricht ab. Es gibt keinen automatischen Rückbau.</p>
+</div>
+
+<h3 style="margin-top:26px">Was ist ein Skill?</h3>
+<div class="card">
+  <p style="margin:0 0 8px">Ein Skill ist ein Ordner mit einer Datei <code>SKILL.md</code>: ein kurzer Kopf (<code>name</code>, <code>description</code>) und darunter das Fachwissen. Die Beschreibung entscheidet, <b>wann</b> der Agent den Skill heranzieht. Der Inhalt ist die <b>verbindliche Wissensquelle</b> des Spezialisten.</p>
+  <div class="chain" style="margin:0">
+    <span class="node">skills/pricing-playbook/SKILL.md</span><span class="arr">→ Upload →</span>
+    <span class="node">Skill-ID</span><span class="arr">→ an Agent hängen →</span>
+    <span class="node">Pricing Specialist</span>
+  </div>
+</div>
+
+<!-- ============ 6. Einrichtung ============ -->
+<h2>6 · Einrichtung: Reihenfolge der Skripte</h2>
+<div class="tablewrap" style="margin-top:12px">
+<table>
+  <thead><tr><th>#</th><th>Skript</th><th>Was es anlegt</th><th>Merkzettel-Datei</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><code>setup_environment.py</code></td><td>Cloud-Umgebung (Container)</td><td><code>.environment_id</code></td></tr>
+    <tr><td>2</td><td><code>create_specialists.py</code></td><td>4 Spezialisten-Agenten</td><td><code>.specialist_ids.json</code></td></tr>
+    <tr><td>3</td><td><code>upload_skills.py</code></td><td>3 Skills, an Spezialisten angehängt</td><td><code>.skill_ids.json</code></td></tr>
+    <tr><td>4</td><td><code>create_coordinator.py</code></td><td>Coordinator mit Roster</td><td><code>.coordinator_id</code></td></tr>
+    <tr><td>5</td><td><code>run_deal_desk.py</code></td><td>Session, Lauf, Download</td><td><code>.last_session_id</code>, <code>outputs/</code></td></tr>
+    <tr><td>optional</td><td><code>download_deliverable.py</code></td><td>Dateien einer älteren Session holen</td><td>–</td></tr>
+    <tr><td>optional</td><td><code>stretch_critic_subagent.py</code></td><td>Fünfter Agent „Critic“ für Gegenlesen</td><td>–</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="note"><b>Wichtig:</b> Schritt 3 (Skills) vor Schritt 5 ausführen. Sonst arbeiten die Spezialisten ohne ihr Fachwissen. Die Aufrufe der Skripte setzen den Workspace-API-Key voraus.</div>
+
+<!-- ============ 7. Terminal lesen ============ -->
+<h2>7 · Die Terminal-Ausgabe lesen</h2>
+<div class="tablewrap" style="margin-top:12px">
+<table>
+  <thead><tr><th>Ausgabe</th><th>Bedeutung</th></tr></thead>
+  <tbody>
+    <tr><td><code>[delegate →] Pricing Specialist</code></td><td>Coordinator schickt einen Auftrag an diesen Spezialisten</td></tr>
+    <tr><td><code>[thread spawned]</code></td><td>Für den Spezialisten wurde ein eigener Arbeitsstrang gestartet</td></tr>
+    <tr><td><code>[thread running]</code></td><td>Der Spezialist arbeitet gerade. Bei vier gleichzeitigen Zeilen siehst du die Parallelität</td></tr>
+    <tr><td><code>[reply ←] Legal Reviewer</code></td><td>Antwort des Spezialisten ist beim Coordinator angekommen</td></tr>
+    <tr><td><code>[delegate →] Deal Desk Critic</code></td><td>Der Coordinator legt den Entwurf dem Critic vor (nur mit Critic)</td></tr>
+    <tr><td><code>[tool: …]</code></td><td>Ein Agent nutzt ein Werkzeug (z. B. Datei schreiben, Code ausführen)</td></tr>
+    <tr><td><code>[swarm finished]</code></td><td>Die Session ist im Leerlauf, das Ergebnis liegt vor</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============ 8. Hinweise ============ -->
+<h2>8 · Gut zu wissen</h2>
+<div class="grid g2" style="margin-top:12px">
+  <div class="card"><h3>Nur Stern-Topologie</h3><p style="margin:0">Spezialisten reden nur mit dem Coordinator, nie untereinander. Das macht den Ablauf nachvollziehbar, der Coordinator ist aber der Engpass.</p></div>
+  <div class="card"><h3>Daten stecken in der Nachricht</h3><p style="margin:0">RFP und Co. gehen als Text mit, nicht als hochgeladene Dateien. Das ist einfach, passt aber nur für kleine Datenmengen.</p></div>
+  <div class="card"><h3>Kein Branding-Skill im Code</h3><p style="margin:0">Der Coordinator-Prompt erwähnt einen „BTS branding skill“ und den docx-Skill. In den Skripten wird aber keiner angehängt. Das Dokument entsteht daher über Standard-Werkzeuge im Container.</p></div>
+  <div class="card"><h3>Kosten und Modelle</h3><p style="margin:0">Opus für den Coordinator, Sonnet und Haiku für die Spezialisten. Mit jedem zusätzlichen Spezialisten oder Durchlauf steigen die Kosten. Modell-IDs in den Skripten vor dem Lauf prüfen.</p></div>
+</div>
+
+<footer>Erstellt aus den Skripten im Ordner <code>specialist-swarm</code>. Beschreibt den Aufbau der Starter-Vorlage; Details der Managed-Agents-Plattform können sich ändern. Alle Beispieldaten sind synthetisch.</footer>
+</div>
+</body>
+</html>
